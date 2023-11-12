@@ -24,7 +24,7 @@ const int relayPin     = 5; // relay trigger
 
 const int HEIGHTOFFSET = 2;    // dist lower than rim
 const int UNCAL_HEIGHT = 20;   // starting height
-const int MAX_RANGE    = 50;   // max height of filling cutout
+const int MAX_RANGE    = 22;   // max dist in cm b/t sensor and empty surface
 const int AVE_FACTOR   = 10;   // number of cycles to average before stopping
 const int DELAY        = 2000; // flow water for DELAY MS after stop height
 const int BUTTON_DELAY = 250;  // ms button press interval
@@ -36,10 +36,10 @@ const int DEBOUNCE     = 25;   // how long to wait before proceeding
 
 volatile long loops = 0;    // number of loops
 
-int aveArray[AVE_FACTOR];   // array to store distances to average over
-int average = 20;           // will start dispensing right away
+int aveArray[AVE_FACTOR];         // array to store distances to average over
+int average = 20;                 // will start dispensing right away
 int stopHeight = EEPROM.read(0);  // get last stored value for stop height
-int start_ms = 0;           // time for non-blocking timing
+int start_ms = 0;                 // time for non-blocking timing
 
 volatile bool dispensing = false;  // dispensing toggle state
 volatile bool full       = false;  // has the cup reached full point this cyle
@@ -57,6 +57,7 @@ void clearRange(int col, int row, int num){
   }
 }
 
+
 void displaySetPoint(){
     // display stop distance set point
     clearRange(9, 1, 3);
@@ -64,14 +65,32 @@ void displaySetPoint(){
     lcd.print(stopHeight);
 }
 
+
 void staticLine (int line) {
   // prints static line of text on LCD
 
-  lcd.clear();
-  lcd.print(" XX/YYcm  (TTTs)");
-  lcd.setCursor(0, 1);
-  lcd.print("---ZZcm to go---");
+  switch (line) {
+    
+    case 0:
+      // static text while dispensing
+      lcd.clear();
+      lcd.print(" XX/YYcm  (TTTs)");
+      lcd.setCursor(0, 1);
+      lcd.print("---ZZcm to go---");
+      break;
+    case 1:
+      // static text for idle state
+      lcd.clear();
+      lcd.print("-fill to: XXcm -");
+      //         0123456789ABCDEF
+      lcd.setCursor(0, 1);
+      lcd.print("(currently YYcm)");
+      //         0123456789ABCDEF
+      break;
+  }
+
 }
+
 
 void stopMessage(int counter){
   if (counter == 0){
@@ -108,6 +127,7 @@ void printVariables(){
   lcd.print(average);
 }
 
+
 void resetAveArray() {
   // initialize array to store readings for averaging
   for (int i = 0; i < AVE_FACTOR; i++) {
@@ -115,6 +135,7 @@ void resetAveArray() {
     // Serial.println(aveArray[i]);
   }
 }
+
 
 void idleState()
 {
@@ -151,6 +172,7 @@ void idleState()
   staticLine(0);
 
 }
+
 
 void dispensingState()
 {
@@ -231,6 +253,7 @@ void dispensingState()
   delay(100);
 
 }
+
 
 void setup() {
   // Serial.begin(115200);
