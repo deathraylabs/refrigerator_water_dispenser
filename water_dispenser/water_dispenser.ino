@@ -100,11 +100,11 @@ void staticLine (int line) {
     case 1:
       // static text for idle state
       lcd.clear();
-      lcd.print("-fill to: XXcm -");
+      lcd.print(" fill to: XXcm");
       //         0123456789ABCDEF
-      lcd.setCursor(0, 1);
-      lcd.print("(currently YYcm)");
-      //         0123456789ABCDEF
+      // lcd.setCursor(0, 1);
+      // lcd.print("(currently YYcm)");
+      // //         0123456789ABCDEF
       break;
   }
 
@@ -149,7 +149,7 @@ void printVariables(){
   // lcd.print(average);
 
   // display remaining fill distance
-  int remaining = stopHeight - fillHeight;
+  int remaining = range - stopHeight;
   clearRange(3, 1 , 2);
   lcd.setCursor(3, 1);
   lcd.print(remaining);
