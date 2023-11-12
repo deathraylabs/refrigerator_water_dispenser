@@ -43,7 +43,7 @@ int start_ms = 0;                 // time for non-blocking timing
 
 volatile bool dispensing = false;  // dispensing toggle state
 volatile bool full       = false;  // has the cup reached full point this cyle
-volatile bool idle       = true;   // have we entered into idle state
+// volatile bool idle       = true;   // have we entered into idle state
 
 ///////////////////////// LCD display //////////////////////////////////////////////////////
 
@@ -67,11 +67,21 @@ void displaySetPoint(){
 }
 
 
+int waterLevel(int distFromSensor){
+  // convert from range to water level
+
+  return MAX_RANGE - distFromSensor;
+}
+
 void insertSetPoint(int col, int row){
     // inserts the current set point at location specified
-    clearRange(col, row, 3);
+    
+    // // water level from base
+    // int waterLevel = MAX_RANGE - stopHeight;
+
+    clearRange(col, row, 2);
     lcd.setCursor(col, row);
-    lcd.print(stopHeight);
+    lcd.print(waterLevel(stopHeight));
 }
 
 
@@ -121,7 +131,7 @@ void printVariables(){
   // and with the correct formatting
 
   // convert distance to sensor to fill height
-  int fillHeight = stopHeight - range;
+  int fillHeight = MAX_RANGE - range;
 
   // display the current fill height
   clearRange(1, 0, 2);
@@ -131,7 +141,7 @@ void printVariables(){
   // display stop distance
   clearRange(4, 0, 2);
   lcd.setCursor(4, 0);
-  lcd.print(stopHeight);
+  lcd.print(waterLevel(stopHeight));
 
   // // display average value
   // clearRange(5, 0, 3);
@@ -167,18 +177,18 @@ void idleState()
   staticLine(1);
 
   // displaySetPoint();
-  insertSetPoint(10, 1);
+  insertSetPoint(10, 0);
 
   while (dispensing == false){
 
     if (digitalRead(incrementPin) == LOW){
       // decreases water height (increases distance)
-      stopHeight++;
+      stopHeight--;
       insertSetPoint(10, 0); 
       delay(BUTTON_DELAY);
     } else if (digitalRead(decrementPin) == LOW) {
       // increases water height (decreases distance)
-      stopHeight--;
+      stopHeight++;
       insertSetPoint(10, 0);
       delay(BUTTON_DELAY);
     } else if (digitalRead(dispensePin) == HIGH){
