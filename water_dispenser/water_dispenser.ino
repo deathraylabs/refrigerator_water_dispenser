@@ -15,18 +15,18 @@ int range;     // measured distance to ultrasonic sensor
 /******* digital pins *********/
 
 // const int calButtonPin = 2; // calibration button
-const int incrementPin = 4; // increment selected value
-const int decrementPin = 3; // decrement selected value
+const int incrementPin = 3; // increment selected value
+const int decrementPin = 4; // decrement selected value
 const int dispensePin  = 2; // start dispensing
 const int relayPin     = 5; // relay trigger
 
 /******* constants ********/
 
 const int HEIGHTOFFSET = 2;    // dist lower than rim
-const int UNCAL_HEIGHT = 20;   // starting height
+// const int UNCAL_HEIGHT = 20;   // starting height
 const int MAX_RANGE    = 22;   // max dist in cm b/t sensor and empty surface
-const int AVE_FACTOR   = 10;   // number of cycles to average before stopping
-const int DELAY        = 2000; // flow water for DELAY MS after stop height
+const int AVE_FACTOR   = 30;   // number of cycles to average before stopping
+const int DELAY        = 1000; // flow water for DELAY MS after stop height
 const int BUTTON_DELAY = 250;  // ms button press interval
 const int ACTIVE_DELAY = 250;  // how often to check sensor data when dispensing
 const int IDLE_DELAY   = 1000; // how often to check sensor when idle
@@ -37,13 +37,13 @@ const int DEBOUNCE     = 25;   // how long to wait before proceeding
 volatile long loops = 0;    // number of loops
 
 int aveArray[AVE_FACTOR];         // array to store distances to average over
-int average = 20;                 // will start dispensing right away
+int average = MAX_RANGE;          // will start dispensing right away
 int stopHeight = EEPROM.read(0);  // get last stored value for stop height
 int start_ms = 0;                 // time for non-blocking timing
 
 volatile bool dispensing = false;  // dispensing toggle state
 volatile bool full       = false;  // has the cup reached full point this cyle
-volatile bool idle       = true;   // have we entered into idle state
+// volatile bool idle       = true;   // have we entered into idle state
 
 ///////////////////////// LCD display //////////////////////////////////////////////////////
 
@@ -67,11 +67,21 @@ void displaySetPoint(){
 }
 
 
+int waterLevel(int distFromSensor){
+  // convert from range to water level
+
+  return MAX_RANGE - distFromSensor;
+}
+
 void insertSetPoint(int col, int row){
     // inserts the current set point at location specified
-    clearRange(col, row, 3);
+    
+    // // water level from base
+    // int waterLevel = MAX_RANGE - stopHeight;
+
+    clearRange(col, row, 2);
     lcd.setCursor(col, row);
-    lcd.print(stopHeight);
+    lcd.print(waterLevel(stopHeight));
 }
 
 
@@ -90,11 +100,11 @@ void staticLine (int line) {
     case 1:
       // static text for idle state
       lcd.clear();
-      lcd.print("-fill to: XXcm -");
+      lcd.print(" fill to: XXcm");
       //         0123456789ABCDEF
-      lcd.setCursor(0, 1);
-      lcd.print("(currently YYcm)");
-      //         0123456789ABCDEF
+      // lcd.setCursor(0, 1);
+      // lcd.print("(currently YYcm)");
+      // //         0123456789ABCDEF
       break;
   }
 
@@ -121,7 +131,7 @@ void printVariables(){
   // and with the correct formatting
 
   // convert distance to sensor to fill height
-  int fillHeight = stopHeight - range;
+  int fillHeight = MAX_RANGE - average;
 
   // display the current fill height
   clearRange(1, 0, 2);
@@ -131,15 +141,10 @@ void printVariables(){
   // display stop distance
   clearRange(4, 0, 2);
   lcd.setCursor(4, 0);
-  lcd.print(stopHeight);
-
-  // // display average value
-  // clearRange(5, 0, 3);
-  // lcd.setCursor(5, 0);
-  // lcd.print(average);
+  lcd.print(waterLevel(stopHeight));
 
   // display remaining fill distance
-  int remaining = stopHeight - fillHeight;
+  int remaining = average - stopHeight;
   clearRange(3, 1 , 2);
   lcd.setCursor(3, 1);
   lcd.print(remaining);
@@ -152,7 +157,7 @@ void printVariables(){
 void resetAveArray() {
   // initialize array to store readings for averaging
   for (int i = 0; i < AVE_FACTOR; i++) {
-    aveArray[i] = UNCAL_HEIGHT;  // allows start right away
+    aveArray[i] = MAX_RANGE;  // allows start right away
     // Serial.println(aveArray[i]);
   }
 }
@@ -167,19 +172,19 @@ void idleState()
   staticLine(1);
 
   // displaySetPoint();
-  insertSetPoint(10, 1);
+  insertSetPoint(10, 0);
 
   while (dispensing == false){
 
     if (digitalRead(incrementPin) == LOW){
       // decreases water height (increases distance)
       stopHeight++;
-      insertSetPoint(10, 1); 
+      insertSetPoint(10, 0); 
       delay(BUTTON_DELAY);
     } else if (digitalRead(decrementPin) == LOW) {
       // increases water height (decreases distance)
       stopHeight--;
-      insertSetPoint(10, 1);
+      insertSetPoint(10, 0);
       delay(BUTTON_DELAY);
     } else if (digitalRead(dispensePin) == HIGH){
       // hop out to dispense again
@@ -208,7 +213,7 @@ void dispensingState()
 
   /*** averaging routine ***/
 
-  if (range >= MAX_RANGE){
+  if (range >= (MAX_RANGE + 1)){
     // skip this loop calculation due to errant data
     // we'll essentially recalculate same thing from last cycle
     loops--;
@@ -219,7 +224,7 @@ void dispensingState()
 
   int sum = 0;
 
-  // sum the last five datapoints
+  // sum the last AVE_FACTOR number of datapoints
   for (int i = 0; i < AVE_FACTOR; i++) {
     sum += aveArray[i];
   }
