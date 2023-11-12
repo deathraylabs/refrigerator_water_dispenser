@@ -15,15 +15,15 @@ int range;     // measured distance to ultrasonic sensor
 /******* digital pins *********/
 
 // const int calButtonPin = 2; // calibration button
-const int incrementPin = 4; // increment selected value
-const int decrementPin = 3; // decrement selected value
+const int incrementPin = 3; // increment selected value
+const int decrementPin = 4; // decrement selected value
 const int dispensePin  = 2; // start dispensing
 const int relayPin     = 5; // relay trigger
 
 /******* constants ********/
 
 const int HEIGHTOFFSET = 2;    // dist lower than rim
-const int UNCAL_HEIGHT = 20;   // starting height
+// const int UNCAL_HEIGHT = 20;   // starting height
 const int MAX_RANGE    = 22;   // max dist in cm b/t sensor and empty surface
 const int AVE_FACTOR   = 10;   // number of cycles to average before stopping
 const int DELAY        = 2000; // flow water for DELAY MS after stop height
@@ -162,7 +162,7 @@ void printVariables(){
 void resetAveArray() {
   // initialize array to store readings for averaging
   for (int i = 0; i < AVE_FACTOR; i++) {
-    aveArray[i] = UNCAL_HEIGHT;  // allows start right away
+    aveArray[i] = MAX_RANGE;  // allows start right away
     // Serial.println(aveArray[i]);
   }
 }
@@ -183,12 +183,12 @@ void idleState()
 
     if (digitalRead(incrementPin) == LOW){
       // decreases water height (increases distance)
-      stopHeight--;
+      stopHeight++;
       insertSetPoint(10, 0); 
       delay(BUTTON_DELAY);
     } else if (digitalRead(decrementPin) == LOW) {
       // increases water height (decreases distance)
-      stopHeight++;
+      stopHeight--;
       insertSetPoint(10, 0);
       delay(BUTTON_DELAY);
     } else if (digitalRead(dispensePin) == HIGH){
