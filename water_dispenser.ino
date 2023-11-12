@@ -117,23 +117,35 @@ void stopMessage(int counter){
 
 
 void printVariables(){
-  // updates LCD display with variable values
-  // with correct formatting
+  // updates LCD display with calculated variables
+  // and with the correct formatting
 
-  // display current reading
-  clearRange(10, 0, 3);
-  lcd.setCursor(10, 0);
-  lcd.print(range);
+  // convert distance to sensor to fill height
+  int fillHeight = stopHeight - range;
+
+  // display the current fill height
+  clearRange(1, 0, 2);
+  lcd.setCursor(1, 0);
+  lcd.print(fillHeight);
 
   // display stop distance
-  clearRange(9, 1, 3);
-  lcd.setCursor(9, 1);
+  clearRange(4, 0, 2);
+  lcd.setCursor(4, 0);
   lcd.print(stopHeight);
 
-  // display average value
-  clearRange(5, 0, 3);
-  lcd.setCursor(5, 0);
-  lcd.print(average);
+  // // display average value
+  // clearRange(5, 0, 3);
+  // lcd.setCursor(5, 0);
+  // lcd.print(average);
+
+  // display remaining fill distance
+  int remaining = stopHeight - fillHeight;
+  clearRange(3, 1 , 2);
+  lcd.setCursor(3, 1);
+  lcd.print(remaining);
+
+  // display elapsed time
+  // TBA
 }
 
 
@@ -162,12 +174,12 @@ void idleState()
     if (digitalRead(incrementPin) == LOW){
       // decreases water height (increases distance)
       stopHeight++;
-      displaySetPoint();
+      insertSetPoint(10, 1); 
       delay(BUTTON_DELAY);
     } else if (digitalRead(decrementPin) == LOW) {
       // increases water height (decreases distance)
       stopHeight--;
-      displaySetPoint();
+      insertSetPoint(10, 1);
       delay(BUTTON_DELAY);
     } else if (digitalRead(dispensePin) == HIGH){
       // hop out to dispense again
@@ -190,11 +202,6 @@ void idleState()
 void dispensingState()
 {
   // determines behavior when water is dispensing
-
-  // this is for debugging
-  // clearRange(0, 1, 3);
-  // lcd.setCursor(3, 1);
-  // lcd.print("!");
 
   // measure range to water surface
   range = sr04.Distance();
