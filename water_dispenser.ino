@@ -43,6 +43,7 @@ int start_ms = 0;                 // time for non-blocking timing
 
 volatile bool dispensing = false;  // dispensing toggle state
 volatile bool full       = false;  // has the cup reached full point this cyle
+volatile bool idle       = true;   // have we entered into idle state
 
 ///////////////////////// LCD display //////////////////////////////////////////////////////
 
@@ -60,8 +61,16 @@ void clearRange(int col, int row, int num){
 
 void displaySetPoint(){
     // display stop distance set point
-    clearRange(9, 1, 3);
-    lcd.setCursor(9, 1);
+    clearRange(10, 1, 3);
+    lcd.setCursor(10, 1);
+    lcd.print(stopHeight);
+}
+
+
+void insertSetPoint(int col, int row){
+    // inserts the current set point at location specified
+    clearRange(col, row, 3);
+    lcd.setCursor(col, row);
     lcd.print(stopHeight);
 }
 
@@ -139,10 +148,14 @@ void resetAveArray() {
 
 void idleState()
 {
-  lcd.clear();
-  lcd.print("STOPPED");
+  // lcd.clear();
+  // lcd.print("STOPPED");
 
-  displaySetPoint();
+  // write the static display text to screen
+  staticLine(1);
+
+  // displaySetPoint();
+  insertSetPoint(10, 1);
 
   while (dispensing == false){
 
