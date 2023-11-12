@@ -68,9 +68,9 @@ void staticLine (int line) {
   // prints static line of text on LCD
 
   lcd.clear();
-  lcd.print("ave: xxx (xxx)cm");
+  lcd.print(" XX/YYcm  (TTTs)");
   lcd.setCursor(0, 1);
-  lcd.print("    stop:     cm");
+  lcd.print("---ZZcm to go---");
 }
 
 void stopMessage(int counter){
