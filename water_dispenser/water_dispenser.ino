@@ -174,12 +174,12 @@ void idleState()
     if (digitalRead(incrementPin) == LOW){
       // decreases water height (increases distance)
       stopHeight++;
-      insertSetPoint(10, 1); 
+      insertSetPoint(10, 0); 
       delay(BUTTON_DELAY);
     } else if (digitalRead(decrementPin) == LOW) {
       // increases water height (decreases distance)
       stopHeight--;
-      insertSetPoint(10, 1);
+      insertSetPoint(10, 0);
       delay(BUTTON_DELAY);
     } else if (digitalRead(dispensePin) == HIGH){
       // hop out to dispense again
