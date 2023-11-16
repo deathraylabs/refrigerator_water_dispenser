@@ -166,11 +166,11 @@ void printVariables(){
   lcd.setCursor(4, 0);
   lcd.print(waterLevel(stopHeight));
 
-  // display remaining fill distance
-  int remaining = average - stopHeight;
-  clearRange(3, 1 , 2);
-  lcd.setCursor(3, 1);
-  lcd.print(remaining);
+  // // display remaining fill distance
+  // int remaining = average - stopHeight;
+  // clearRange(3, 1 , 2);
+  // lcd.setCursor(3, 1);
+  // lcd.print(remaining);
 
   // display elapsed time
   clearRange(11, 0, 3);
@@ -233,7 +233,6 @@ void dispensingState()
 {
   // determines behavior when water is dispensing
 
-
  /********************* averaging routine ***********************/
 
   if (firstMeasurement){
@@ -245,13 +244,13 @@ void dispensingState()
 
       // populate array with values
       aveArray[i] = range;
-      delay(25);
+      delay(20);
     }
 
     // no longer first measurement
     firstMeasurement = false;
 
-    // start timer
+    // reset dispense timer
     dispenseStartTime = millis();
 
   } else{
