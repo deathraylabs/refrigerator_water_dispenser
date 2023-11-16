@@ -39,7 +39,8 @@ volatile long loops = 0;    // number of loops
 int aveArray[AVE_FACTOR];         // array to store distances to average over
 int average = MAX_RANGE;          // will start dispensing right away
 int stopHeight = EEPROM.read(0);  // get last stored value for stop height
-int start_ms = 0;                 // time for non-blocking timing
+int dispenseStartTime = 0;        // ms value at start of dispensing
+int dispenseElapsedTime = 0;      // container for keeping track of time taken to dispense
 
 volatile bool dispensing = false;  // dispensing toggle state
 volatile bool full       = false;  // has the cup reached full point this cyle
@@ -211,7 +212,7 @@ void dispensingState()
   // measure range to water surface
   range = sr04.Distance();
 
-  /*** averaging routine ***/
+  /********************* averaging routine ***********************/
 
   if (range >= (MAX_RANGE + 1)){
     // skip this loop calculation due to errant data
@@ -233,21 +234,25 @@ void dispensingState()
   // larger than largest possible cup size
   average = sum / AVE_FACTOR;
   
+  /****************** end of averaging routine ***********************/
+
   // update LCD display with new data
   printVariables();
 
   // check to see if water is a desired height and keep filling
   // if it's not
   if ((average >= stopHeight) && (dispensing == true)) {
-    digitalWrite(relayPin, HIGH);
-    
-    // // set flowing tag to handle final fill
-    // dispensing = true;
+    /* keep dispensing, water hasn't reached stop height yet
+        - distance is measured from above the cup and from the sensor
+        - water level is higher when the range to sensor is smaller
+        -> if ave range > stopHeight, the water level is lower than
+           where we want it to stop (reverse of what you might expect)
+    */
 
-    // // for debugging
-    // clearRange(0, 1, 3);
-    // lcd.setCursor(0, 1);
-    // lcd.print("on");
+    digitalWrite(relayPin, HIGH);  // keep switch on
+
+    // record the elapsed time
+    dispenseElapsedTime = millis() - dispenseStartTime;
   } else if ((average < stopHeight) && (dispensing == true)) {
     /* water level is at stop height and should continue
         to flow a bit longer to ensure average value remains
@@ -255,10 +260,13 @@ void dispensingState()
     */
     // dispensing = false;
     full = true;      // cup is now full
-    loops = 0;        // to get "full" message to work
+    loops = 0;        // to get "full" animated message to work
     delay(DELAY);
 
-    // switch off flow and reset flag
+    // record the elapsed time
+    dispenseElapsedTime = millis() - dispenseStartTime;
+
+    // turn off fridge water flow using relay
     digitalWrite(relayPin, LOW);
 
     // save this current fill level to non-volatile memory
@@ -266,12 +274,6 @@ void dispensingState()
     EEPROM.update(0, value);  // (address, byte value)
 
     stopMessage(loops);
-
-    // // display relay state on LCD
-    // clearRange(0, 1, 3);
-    // lcd.setCursor(0, 1);
-    // lcd.print("off ");
-
   }
 
   // sensor needs time to reset
@@ -312,9 +314,6 @@ void setup() {
 
   resetAveArray();
 
-  // get start time for for loop timing
-  start_ms = millis();
-
   dispensing = false;
 }
 
@@ -323,6 +322,10 @@ void loop() {
   if ((digitalRead(dispensePin) == HIGH) && (dispensing == false)){
     // if toggle is on and we aren't dispensing, start dispensing
     dispensing = true;
+
+    // start the elapsed time counter
+    dispenseStartTime = millis();
+
     // allow time to debounce to prevent state flipping
     delay(DEBOUNCE);
   } else if (digitalRead(dispensePin) == LOW){
