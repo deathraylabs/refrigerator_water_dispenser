@@ -25,7 +25,7 @@ const int relayPin     = 5; // relay trigger
 const int HEIGHTOFFSET = 2;    // dist lower than rim
 // const int UNCAL_HEIGHT = 20;   // starting height
 const int MAX_RANGE    = 22;   // max dist in cm b/t sensor and empty surface
-const int AVE_FACTOR   = 30;   // number of cycles to average before stopping
+const int AVE_FACTOR   = 20;   // number of cycles to average before stopping
 const int DELAY        = 1000; // flow water for DELAY MS after stop height
 const int BUTTON_DELAY = 250;  // ms button press interval
 const int ACTIVE_DELAY = 250;  // how often to check sensor data when dispensing
@@ -41,6 +41,7 @@ int average = MAX_RANGE;          // will start dispensing right away
 int stopHeight = EEPROM.read(0);  // get last stored value for stop height
 int dispenseStartTime = 0;        // ms value at start of dispensing
 int dispenseElapsedTime = 0;      // container for keeping track of time taken to dispense
+bool firstMeasurement = true;     // first measurements are averaged differently
 
 volatile bool dispensing = false;  // dispensing toggle state
 volatile bool full       = false;  // has the cup reached full point this cyle
@@ -210,6 +211,7 @@ void idleState()
     } else if (digitalRead(dispensePin) == HIGH){
       // hop out to dispense again
       dispensing = true;
+      firstMeasurement = true;
       // allow time to debounce to prevent state flipping
       delay(DEBOUNCE);
       // reset timer
@@ -231,18 +233,39 @@ void dispensingState()
 {
   // determines behavior when water is dispensing
 
-  // measure range to water surface
-  range = sr04.Distance();
 
-  /********************* averaging routine ***********************/
+ /********************* averaging routine ***********************/
 
-  if (range >= (MAX_RANGE + 1)){
-    // skip this loop calculation due to errant data
-    // we'll essentially recalculate same thing from last cycle
-    loops--;
-  } else {
-    // add current range to average
-    aveArray[loops % AVE_FACTOR] = range;
+  if (firstMeasurement){
+    // take AVE_FACTOR number of measurements first to
+    // set the baseline water height
+    for (int i = 0; i < AVE_FACTOR; i++) {
+      // measure range to water surface
+      range = sr04.Distance();
+
+      // populate array with values
+      aveArray[i] = range;
+      delay(25);
+    }
+
+    // no longer first measurement
+    firstMeasurement = false;
+
+    // start timer
+    dispenseStartTime = millis();
+
+  } else{
+    // measure range to water surface
+    range = sr04.Distance();
+
+    if (range >= (MAX_RANGE + 1)){
+      // skip this loop calculation due to errant data
+      // we'll essentially recalculate same thing from last cycle
+      loops--;
+    } else {
+      // add current range to average
+      aveArray[loops % AVE_FACTOR] = range;
+    }
   }
 
   int sum = 0;
