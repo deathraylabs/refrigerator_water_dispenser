@@ -173,7 +173,7 @@ void printVariables(){
 
   // display elapsed time
   clearRange(11, 0, 3);
-  lcd.setCursor(10, 0);
+  lcd.setCursor(11, 0);
   lcd.print(dispenseElapsedTime);
 }
 
@@ -189,9 +189,6 @@ void resetAveArray() {
 
 void idleState()
 {
-  // lcd.clear();
-  // lcd.print("STOPPED");
-
   // write the static display text to screen
   staticLine(1);
 
@@ -215,6 +212,8 @@ void idleState()
       dispensing = true;
       // allow time to debounce to prevent state flipping
       delay(DEBOUNCE);
+      // reset timer
+      dispenseStartTime = millis();
     }
 
   }
