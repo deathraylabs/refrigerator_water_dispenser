@@ -74,6 +74,15 @@ int waterLevel(int distFromSensor){
   return MAX_RANGE - distFromSensor;
 }
 
+
+void recordElapsedTime(int ref_ms){
+  /* record number of seconds since the reference
+      time given in ms. */
+
+  dispenseElapsedTime = (millis() - ref_ms) / 1000;
+}
+
+
 void insertSetPoint(int col, int row){
     // inserts the current set point at location specified
     
@@ -125,8 +134,8 @@ void stopMessage(int counter){
     lcd.print("FINISHED! (XXXs)");
     //         0123456789ABCDEF
     // add the elapsed time to message
-    clearRange(10, 0, 3);
-    lcd.setCursor(0, 11);
+    clearRange(11, 0, 3);
+    lcd.setCursor(11, 0);
     lcd.print(dispenseElapsedTime);
   }
   int col = counter % 32;
@@ -266,7 +275,7 @@ void dispensingState()
     digitalWrite(relayPin, HIGH);  // keep switch on
 
     // record the elapsed time
-    dispenseElapsedTime = millis() - dispenseStartTime;
+    recordElapsedTime(dispenseStartTime);
   } else if ((average < stopHeight) && (dispensing == true)) {
     /* water level is at stop height and should continue
         to flow a bit longer to ensure average value remains
@@ -278,7 +287,7 @@ void dispensingState()
     delay(DELAY);
 
     // record the elapsed time
-    dispenseElapsedTime = millis() - dispenseStartTime;
+    recordElapsedTime(dispenseStartTime);
 
     // turn off fridge water flow using relay
     digitalWrite(relayPin, LOW);
