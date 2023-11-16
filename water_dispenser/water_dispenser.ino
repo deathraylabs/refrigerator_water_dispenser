@@ -113,9 +113,20 @@ void staticLine (int line) {
 
 
 void stopMessage(int counter){
+  /* Message displayed after dispensing has stopped
+  
+    args:  counter - set by external program loop and
+                     serves to animate the sequence
+  */
   if (counter == 0){
+    // only write the top line once
     lcd.clear();
-    lcd.print("cup is full");
+    lcd.print("FINISHED! (XXXs)");
+    //         0123456789ABCDEF
+    // add the elapsed time to message
+    clearRange(10, 0, 3);
+    lcd.setCursor(0, 11);
+    lcd.print(dispenseElapsedTime);
   }
   int col = counter % 32;
   int prevCol = (16 + (col)) % 32;
