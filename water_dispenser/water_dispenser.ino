@@ -95,8 +95,9 @@ void staticLine (int line) {
       // static text while dispensing
       lcd.clear();
       lcd.print(" XX/YYcm  (TTTs)");
-      lcd.setCursor(0, 1);
-      lcd.print("---ZZcm to go---");
+      //         0123456789ABCDEF
+      // lcd.setCursor(0, 1);
+      // lcd.print("-- ZZcm to go --");
       break;
     case 1:
       // static text for idle state
@@ -140,7 +141,7 @@ void stopMessage(int counter){
 
 void printVariables(){
   // updates LCD display with calculated variables
-  // and with the correct formatting
+  // using the correct formatting
 
   // convert distance to sensor to fill height
   int fillHeight = MAX_RANGE - average;
@@ -162,7 +163,9 @@ void printVariables(){
   lcd.print(remaining);
 
   // display elapsed time
-  // TBA
+  clearRange(11, 0, 3);
+  lcd.setCursor(10, 0);
+  lcd.print(dispenseElapsedTime);
 }
 
 
@@ -340,7 +343,7 @@ void loop() {
     // allow time to debounce to prevent state flipping
     delay(DEBOUNCE);
   } else if (digitalRead(dispensePin) == LOW){
-    // stop dispensing if we are and the toggle is flipped low
+    // stop dispensing if the toggle switch is flipped low
     dispensing = false;
     full = false;  // reset to fill again
     delay(DEBOUNCE);
@@ -360,6 +363,7 @@ void loop() {
   }
 
   // loop count required for averaging routine above
+  // also animates the "finished" display
   if (loops <= 10000) {
     loops++;
   } else {
