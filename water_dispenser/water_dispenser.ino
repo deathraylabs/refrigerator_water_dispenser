@@ -39,8 +39,8 @@ volatile long loops = 0;    // number of loops
 int aveArray[AVE_FACTOR];         // array to store distances to average over
 int average = MAX_RANGE;          // will start dispensing right away
 int stopHeight = EEPROM.read(0);  // get last stored value for stop height
-int dispenseStartTime = 0;        // ms value at start of dispensing
-int dispenseElapsedTime = 0;      // container for keeping track of time taken to dispense
+volatile int dispenseStartTime = 0;        // ms value at start of dispensing
+volatile int dispenseElapsedTime = 0;      // container for keeping track of time taken to dispense
 bool firstMeasurement = true;     // first measurements are averaged differently
 
 volatile bool dispensing = false;  // dispensing toggle state
@@ -118,6 +118,11 @@ void staticLine (int line) {
       // lcd.print("(currently YYcm)");
       // //         0123456789ABCDEF
       break;
+    case 2:
+      // initial calibration
+      lcd.clear();
+      lcd.print("calibrating.....");
+      //         0123456789ABCDEF
   }
 
 }
@@ -236,6 +241,8 @@ void dispensingState()
  /********************* averaging routine ***********************/
 
   if (firstMeasurement){
+    staticLine(2);  // let them know calibration is happening
+
     // take AVE_FACTOR number of measurements first to
     // set the baseline water height
     for (int i = 0; i < AVE_FACTOR; i++) {
@@ -250,7 +257,12 @@ void dispensingState()
     // no longer first measurement
     firstMeasurement = false;
 
-    // reset dispense timer
+    staticLine(0);  // return to standard display
+
+    // set timer display to zero, will be reset properly
+    // once the relay is turned on
+    dispenseElapsedTime = 0;
+    // start the elapsed time counter
     dispenseStartTime = millis();
 
   } else{
@@ -367,11 +379,12 @@ void loop() {
     // if toggle is on and we aren't dispensing, start dispensing
     dispensing = true;
 
-    // start the elapsed time counter
-    dispenseStartTime = millis();
-
     // allow time to debounce to prevent state flipping
     delay(DEBOUNCE);
+
+    // // start the elapsed time counter
+    // dispenseStartTime = millis();
+
   } else if (digitalRead(dispensePin) == LOW){
     // stop dispensing if the toggle switch is flipped low
     dispensing = false;
